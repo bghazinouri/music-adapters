@@ -20,14 +20,14 @@ DiscretizeAdapterPois::DiscretizeAdapterPois()
 
 void DiscretizeAdapterPois::init(int argc, char** argv)
 {
-    grid_positions_filename = DEFAULT_GRID_POSITIONS_FILENAME;
-    representation_type = DEFAULT_REPRESENTATION;
+    //grid_positions_filename = DEFAULT_GRID_POSITIONS_FILENAME;
+    //representation_type = DEFAULT_REPRESENTATION;
 
     Adapter::init(argc, argv, "Discretize");
 
     // config needed for this specific adapter
     setup->config("grid_positions_filename", &grid_positions_filename);
-//    setup->config("representation_type", &representation_type);
+    setup->config("representation_type", &representation_type);
     
     readParams();  //Initialize the parameters from files.
     readGridPositionFile();
@@ -46,7 +46,7 @@ void DiscretizeAdapterPois::init(int argc, char** argv)
     // firing_rate.open(data_path+"/firing_rate.dat");
     // firing_rate << "x\ty\tID\tfr\n";
 
-    std::cout << "The simulation is based on " << representation_type << " representation\n";
+    std::cout << "\nRepresentation used is " << representation_type << "\n";
 
 }
 
@@ -180,7 +180,7 @@ DiscretizeAdapterPois::readGridPositionFile()
 {
 
     Json::Reader json_reader;
-
+    int offset=0;
     std::ifstream grid_positions_file;
     grid_positions_file.open(grid_positions_filename.c_str(), std::ios::in);
     string json_grid_positions_ = "";
@@ -203,22 +203,34 @@ DiscretizeAdapterPois::readGridPositionFile()
     }
     else
     {
+        if (representation_type == "place")
+        {
+            offset = 0;
+        }
+        else if (representation_type == "grid")
+        {
+            offset = num_place_cells;
+        }
+        else if (representation_type == "border")
+        {
+            offset = num_place_cells + num_grid_cells;
+        }
         rep_type = new int[port_out->data_size];
         max_fr = new float[port_out->data_size];
         for (int i = 0; i < port_out->data_size; ++i)
         {
-            rep_type[i] = json_grid_positions[i][4].asInt();
-            max_fr[i] = json_grid_positions[i][5].asFloat();
+            rep_type[i] = json_grid_positions[i+offset][4].asInt();
+            max_fr[i] = json_grid_positions[i+offset][5].asFloat();
             
             double* pos_ = new double[port_in->data_size];
             double* sigmas_ = new double[port_in->data_size];
 
             for (int j = 0; j < port_in->data_size; ++j)
             {
-                pos_[j] = json_grid_positions[i][j].asDouble();
+                pos_[j] = json_grid_positions[i+offset][j].asDouble();
                
                 //put sigmas on the diagonal
-                sigmas_[j] = json_grid_positions[i][port_in->data_size + j].asDouble(); 
+                sigmas_[j] = json_grid_positions[i+offset][port_in->data_size + j].asDouble(); 
             }
             grid_positions.insert(std::pair<int, double*>(i, pos_));
             sigmas.insert(std::pair<int, double*>(i, sigmas_));
@@ -301,6 +313,9 @@ void DiscretizeAdapterPois::readParams()
     Json::Value json_file;
     reader.parse(file, json_file);
     firing_rate_parameter = json_file["place"]["spatial_prop"]["max_fr"].asFloat();
+    num_place_cells = json_file["place"]["num_neurons"].asInt();
+    num_grid_cells = json_file["grid"]["num_neurons"].asInt();
+    num_border_cells = json_file["border"]["num_neurons"].asInt();
     file.close();
 
 }

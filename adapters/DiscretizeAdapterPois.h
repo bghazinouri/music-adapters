@@ -47,6 +47,9 @@ class DiscretizeAdapterPois : public Adapter
         int Simtime = 10.0;
         std::mt19937 gen;
         float firing_rate_parameter = 0.0;
+        int num_place_cells = 0;
+        int num_grid_cells = 0;
+        int num_border_cells = 0;
         std::string data_path="./";
         const double PI = M_PI;
 
