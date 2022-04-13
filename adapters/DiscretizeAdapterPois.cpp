@@ -54,14 +54,13 @@ void DiscretizeAdapterPois::init(int argc, char** argv)
 void
 DiscretizeAdapterPois::tick()
 {
-    double rnd = 0.0;
-    // double tmp_ = 0;
     double fr_prob_tmp = 0;
-    // std::string representation_type = "place";
+    double tmp_ = 0;
+    double int_mult = 0;
+    // int t = 0;
+    double rnd = 0.0;
     double phi_l, omega;
     double kl [2];
-    // bool spk = 0;
-    // time = runtime->time();
     std::uniform_real_distribution<> dis(0.0, 1.0);
 
     location_fl << runtime->time() << "\t" \
@@ -69,21 +68,19 @@ DiscretizeAdapterPois::tick()
                 << port_in->data[1] << "\n";
 
     for (int i = 0; i < port_out->data_size; ++i){
-        double tmp_ = 0;
-        double int_mult = 0;
-        int bor_temp = 0;
-        int t = 0;
+        fr_prob_tmp = 0.;
+        tmp_ = 0.;
+        int_mult = 0.;
+        // t = 0;
         // calculate distance to this place cell 
-
         if (rep_type[i] == 0){ //place
-//            std::cout << "place\n";
             for (int j = 0; j < port_in->data_size; ++j){
                 tmp_ += std::pow((port_in->data[j] - grid_positions[i][j]) / sigmas[i][j], 2);
             }
-            t = 1;
+            tmp_ = std::exp(-tmp_/2);
+            // t = 1;
         }
         else if (rep_type[i] == 1){ //grid
-//            std::cout << "grid\n";
             for (int hex_axis = 0; hex_axis < 3; hex_axis++){
                 phi_l = -PI/6 + hex_axis*PI/3;
                 omega = 2*PI/(sin(PI/3)*sigmas[i][0]);
@@ -93,51 +90,34 @@ DiscretizeAdapterPois::tick()
                 tmp_ += cos(omega*int_mult) - 1;
             }
             tmp_ = -tmp_*sigmas[i][1]/1.5;
-            t = 1;
+            // t = 1;
         }
         else if (rep_type[i] == 2){ //border
-//            std::cout << "border\n";
-            for (int j = 0; j < port_in->data_size; ++j){
-                if(grid_positions[i][j]-sigmas[i][j]<=port_in->data[j] && grid_positions[i][j]+sigmas[i][j]>=port_in->data[j] ){
-                    bor_temp += 1;
+        //     // for (int j = 0; j < port_in->data_size; ++j){
+            if((grid_positions[i][0]-sigmas[i][0])<=port_in->data[0] && (grid_positions[i][0]+sigmas[i][0])>=port_in->data[0] && \
+                (grid_positions[i][1]-sigmas[i][1])<=port_in->data[1] && (grid_positions[i][1]+sigmas[i][1])>=port_in->data[1]){
+                tmp_ = 1;
                 }
-            if (bor_temp == port_in->data_size){
-                tmp_ = 0;
-                t = 1;
-                }
-            }
+        //     //     std::cout << "border cells should be active! #" << i << std::endl;
+        //     //     // }
+        //     // // if (tmp_ == port_in->data_size){
+        //     // //     tmp_ = 1;
+        //     //     // t = 1;
+        //     //     }
+        //     }
         }
        
-        // calculate activation in respect to gaussion kernel
-        // port_out->data[i] = -1. + 2. * std::exp(-tmp_/2.);
+        fr_prob_tmp = max_fr[i] * timestep * tmp_;// * t;
 
-        // modifying maximum firing rate to fit it into the spiking network
-        fr_prob_tmp = max_fr[i] * timestep * std::exp(-tmp_/2.)*t;
-
-        // << port_in->data[0] << "\t" \
-        //            << port_in->data[1] << "\t" \
-        //            << i << "\t" \
-        //            << firing_rate_parameter * std::exp(-tmp_/2.) << "\n";
-        
         rnd = dis(gen);
 
         if (rnd < fr_prob_tmp){
             static_cast<EventOutPort*>(port_out)->send(i, runtime->time() + timestep);
-            // port_out->insertEvent(i, time)
         }
-        // if (rnd < fr_prob_tmp){
-        //     spk = 1;
-        // }
-        // else
-        // {
-        //     spk = 0;
-        // }
-        // port_out->data[i] = spk;
     }
 
     if (runtime->time()>=Simtime-timestep){
         location_fl.close();
-        //firing_rate.close();
     }
 }
 
@@ -203,18 +183,23 @@ DiscretizeAdapterPois::readGridPositionFile()
     }
     else
     {
+        // std::cout   << "Rep_type: " << representation_type << "\"\n";
         if (representation_type == "place")
         {
             offset = 0;
+            // std::cout   << "If statement: Rep_type: " << "place" << "\"\n";
         }
         else if (representation_type == "grid")
         {
             offset = num_place_cells;
+            // std::cout   << "If statement: Rep_type: " << "grid" << "\"\n";
         }
         else if (representation_type == "border")
         {
             offset = num_place_cells + num_grid_cells;
+            // std::cout   << "If statement: Rep_type: " << "border" << "\"\n";
         }
+        std::cout  << "offset=" << offset << "\"\n";
         rep_type = new int[port_out->data_size];
         max_fr = new float[port_out->data_size];
         for (int i = 0; i < port_out->data_size; ++i)
@@ -241,56 +226,6 @@ DiscretizeAdapterPois::readGridPositionFile()
 
 }
 
-// The following function is commented out and replaced by the function below it
-/*
-void DiscretizeAdapterPois::readSeedfromNetParams()
-{
-    std::string search;
-    std::ifstream inFile;
-    std::string line;
-    // int Seed;
-
-    inFile.open("network_params.json");
-
-    if(!inFile){
-    std::cout << "Unable to open file" << std::endl;
-    exit(1);
-    }
-    // std::cout << "Enter word to search for: ";
-    // std::cin >>search;
-    search = "seed";
-
-
-    size_t pos;
-    while(inFile.good())
-    {
-        getline(inFile,line); // get line from file
-        pos = line.find(search); // search
-        if(pos != std::string::npos) // string::npos is returned if string is not found
-            {
-                std::cout <<"Found!";
-                std::cout << line << std::endl;
-                std::size_t poscolon = line.find_first_of(":");
-                // std::cout << poscolon << std::endl;
-                std::string str_tmp = line.substr(poscolon);
-                // std::cout << str_tmp << std::endl;
-                str_tmp.erase(0, 1);
-                // std::cout << str_tmp << std::endl;
-                std::size_t poscomma = line.find(",");
-                // std::cout << poscomma << std::endl;
-                if (poscomma != std::string::npos){
-                    str_tmp.erase(poscomma-poscolon-1);
-                    // std::string Seed = line.substr(1, line.find(":"));
-                    // std::cout << str_tmp << std::endl;
-                }
-                Seed = std::stod(str_tmp);
-                std::cout << (Seed) << std::endl;
-                break;
-            }
-    }
-    inFile.close();
-}
-*/
 void DiscretizeAdapterPois::readSeedfromNetParams()
 {
     std::ifstream file("sim_params.json");
