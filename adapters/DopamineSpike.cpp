@@ -30,14 +30,18 @@ void DopamineSpike::init(int argc, char** argv)
 void
 DopamineSpike::tick()
 {
+    std::cout << "spk_time = " << spk_time << std::endl;
     for (int i = 0; i < port_out->data_size; ++i){
     
         // calculate distance to this place cell 
         for (int j = 0; j < port_in->data_size; ++j){
             rew_file << runtime->time() << "\t" << port_in->data[j] << std::endl;
             if (port_in->data[j] > 0){
-                static_cast<EventOutPort*>(port_out)->send(i, runtime->time() + timestep);
-                dop_spk_file << runtime->time() + timestep << std::endl;
+                if (abs(runtime->time() - spk_time) > timestep/5){
+                    static_cast<EventOutPort*>(port_out)->send(i, runtime->time() + timestep);
+                    dop_spk_file << runtime->time() + timestep << std::endl;
+                }
+                spk_time = runtime->time() + timestep;
             }
         }
     }

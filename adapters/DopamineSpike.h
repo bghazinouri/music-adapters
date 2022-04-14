@@ -33,6 +33,7 @@ class DopamineSpike : public Adapter
         void tick();
         std::ofstream rew_file;
         std::ofstream dop_spk_file;
+        double spk_time = 0;
 
     private:
 };
