@@ -98,6 +98,13 @@ DiscretizeAdapterPois::tick()
                 (grid_positions[i][1]-sigmas[i][1])<=port_in->data[1] && (grid_positions[i][1]+sigmas[i][1])>=port_in->data[1]){
                 tmp_ = 1;
                 }
+        }
+        else if (rep_type[i] == 3){ //obstacle
+        //     // for (int j = 0; j < port_in->data_size; ++j){
+            if((grid_positions[i][0]-sigmas[i][0])<=port_in->data[0] && (grid_positions[i][0]+sigmas[i][0])>=port_in->data[0] && \
+                (grid_positions[i][1]-sigmas[i][1])<=port_in->data[1] && (grid_positions[i][1]+sigmas[i][1])>=port_in->data[1]){
+                tmp_ = 1;
+                }
         //     //     std::cout << "border cells should be active! #" << i << std::endl;
         //     //     // }
         //     // // if (tmp_ == port_in->data_size){
@@ -199,6 +206,11 @@ DiscretizeAdapterPois::readGridPositionFile()
             offset = num_place_cells + num_grid_cells;
             // std::cout   << "If statement: Rep_type: " << "border" << "\"\n";
         }
+        else if (representation_type == "obstacle")
+        {
+            offset = num_place_cells + num_grid_cells + num_border_cells;
+            // std::cout   << "If statement: Rep_type: " << "border" << "\"\n";
+        }
         std::cout  << "offset=" << offset << "\"\n";
         rep_type = new int[port_out->data_size];
         max_fr = new float[port_out->data_size];
@@ -251,6 +263,7 @@ void DiscretizeAdapterPois::readParams()
     num_place_cells = json_file["place"]["num_neurons"].asInt();
     num_grid_cells = json_file["grid"]["num_neurons"].asInt();
     num_border_cells = json_file["border"]["num_neurons"].asInt();
+    num_obstacle_cells = json_file["obstacle"]["num_neurons"].asInt();
     file.close();
 
 }

@@ -50,6 +50,7 @@ class DiscretizeAdapterPois : public Adapter
         int num_place_cells = 0;
         int num_grid_cells = 0;
         int num_border_cells = 0;
+        int num_obstacle_cells = 0;
         std::string data_path="./";
         const double PI = M_PI;
 
