@@ -81,6 +81,12 @@ ZMQContAdapter::tick()
             ++i;
         }
 
+        if (!json_msg.empty() && json_msg[0].isMember("crnt_trial_num")) {
+            port_out->data[2] = json_msg[0]["crnt_trial_num"].asFloat();
+        }
+        if (!json_msg.empty() && json_msg[0].isMember("crnt_trial_time")) {
+            port_out->data[3] = json_msg[0]["crnt_trial_time"].asFloat();
+        }
     }
 }
 

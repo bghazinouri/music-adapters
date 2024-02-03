@@ -40,8 +40,8 @@ void DiscretizeAdapterPois::init(int argc, char** argv)
     gen.seed(Seed);
     std::cout << "The seed number is:" << Seed << std::endl;
     std::cout << "Data path: " << data_path+"/agents_location.dat" << std::endl;
-    location_fl.open(data_path+"/agents_location.dat");
-    location_fl << "time\tx\ty\n";
+    //location_fl.open(data_path+"/agents_location.dat");
+    //location_fl << "time\tx\ty\n";
 
     // firing_rate.open(data_path+"/firing_rate.dat");
     // firing_rate << "x\ty\tID\tfr\n";
@@ -63,7 +63,15 @@ DiscretizeAdapterPois::tick()
     double kl [2];
     std::uniform_real_distribution<> dis(0.0, 1.0);
 
-    location_fl << runtime->time() << "\t" \
+    // Print the contents of port_in->data
+    //std::cout << "Input Data: ";
+    //for (int i = 0; i < port_in->data_size; ++i) {
+    //    std::cout << port_in->data[i] << " ";
+    //}
+    //std::cout << std::endl;
+
+
+//    location_fl << runtime->time() << "\t" \
                 << port_in->data[0] << "\t" \
                 << port_in->data[1] << "\n";
 
@@ -74,7 +82,7 @@ DiscretizeAdapterPois::tick()
         // t = 0;
         // calculate distance to this place cell 
         if (rep_type[i] == 0){ //place
-            for (int j = 0; j < port_in->data_size; ++j){
+            for (int j = 0; j < 2; ++j){
                 tmp_ += std::pow((port_in->data[j] - grid_positions[i][j]) / sigmas[i][j], 2);
             }
             tmp_ = std::exp(-tmp_/2);
@@ -123,9 +131,9 @@ DiscretizeAdapterPois::tick()
         }
     }
 
-    if (runtime->time()>=Simtime-timestep){
-        location_fl.close();
-    }
+//    if (runtime->time()>=Simtime-timestep){
+//        location_fl.close();
+//    }
 }
 
 /**
@@ -219,15 +227,15 @@ DiscretizeAdapterPois::readGridPositionFile()
             rep_type[i] = json_grid_positions[i+offset][4].asInt();
             max_fr[i] = json_grid_positions[i+offset][5].asFloat();
             
-            double* pos_ = new double[port_in->data_size];
-            double* sigmas_ = new double[port_in->data_size];
+            double* pos_ = new double[2];
+            double* sigmas_ = new double[2];
 
-            for (int j = 0; j < port_in->data_size; ++j)
+            for (int j = 0; j < 2; ++j)
             {
                 pos_[j] = json_grid_positions[i+offset][j].asDouble();
                
                 //put sigmas on the diagonal
-                sigmas_[j] = json_grid_positions[i+offset][port_in->data_size + j].asDouble(); 
+                sigmas_[j] = json_grid_positions[i+offset][2 + j].asDouble(); 
             }
             grid_positions.insert(std::pair<int, double*>(i, pos_));
             sigmas.insert(std::pair<int, double*>(i, sigmas_));
