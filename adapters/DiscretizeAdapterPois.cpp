@@ -121,6 +121,10 @@ DiscretizeAdapterPois::tick()
         //     //     }
         //     }
         }
+        else if (rep_type[i] == 4){ //noise
+            tmp_ = 1;
+            // t = 1;
+        }
        
         fr_prob_tmp = max_fr[i] * timestep * tmp_;// * t;
 
