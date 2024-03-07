@@ -51,8 +51,7 @@ void DiscretizeAdapterPois::init(int argc, char** argv)
 }
 
 
-void
-DiscretizeAdapterPois::tick()
+void DiscretizeAdapterPois::tick()
 {
     double fr_prob_tmp = 0;
     double tmp_ = 0;
@@ -71,22 +70,15 @@ DiscretizeAdapterPois::tick()
     //std::cout << std::endl;
 
 
-//    location_fl << runtime->time() << "\t" \
-                << port_in->data[0] << "\t" \
-                << port_in->data[1] << "\n";
-
     for (int i = 0; i < port_out->data_size; ++i){
         fr_prob_tmp = 0.;
         tmp_ = 0.;
         int_mult = 0.;
-        // t = 0;
-        // calculate distance to this place cell 
         if (rep_type[i] == 0){ //place
             for (int j = 0; j < 2; ++j){
                 tmp_ += std::pow((port_in->data[j] - grid_positions[i][j]) / sigmas[i][j], 2);
             }
             tmp_ = std::exp(-tmp_/2);
-            // t = 1;
         }
         else if (rep_type[i] == 1){ //grid
             for (int hex_axis = 0; hex_axis < 3; hex_axis++){
@@ -101,33 +93,70 @@ DiscretizeAdapterPois::tick()
             // t = 1;
         }
         else if (rep_type[i] == 2){ //border
-        //     // for (int j = 0; j < port_in->data_size; ++j){
             if((grid_positions[i][0]-sigmas[i][0])<=port_in->data[0] && (grid_positions[i][0]+sigmas[i][0])>=port_in->data[0] && \
                 (grid_positions[i][1]-sigmas[i][1])<=port_in->data[1] && (grid_positions[i][1]+sigmas[i][1])>=port_in->data[1]){
                 tmp_ = 1;
                 }
         }
         else if (rep_type[i] == 3){ //obstacle
-        //     // for (int j = 0; j < port_in->data_size; ++j){
             if((grid_positions[i][0]-sigmas[i][0])<=port_in->data[0] && (grid_positions[i][0]+sigmas[i][0])>=port_in->data[0] && \
                 (grid_positions[i][1]-sigmas[i][1])<=port_in->data[1] && (grid_positions[i][1]+sigmas[i][1])>=port_in->data[1]){
                 tmp_ = 1;
                 }
-        //     //     std::cout << "border cells should be active! #" << i << std::endl;
-        //     //     // }
-        //     // // if (tmp_ == port_in->data_size){
-        //     // //     tmp_ = 1;
-        //     //     // t = 1;
-        //     //     }
-        //     }
         }
         else if (rep_type[i] == 4){ //noise
-            tmp_ = 1;
-            // t = 1;
+            std::mt19937 eng(Seed * port_in->data[2]* port_in->data[3]*i); // Seed the generator with a fixed value
+            std::uniform_real_distribution<> distr(0.9, 1.1); 
+            float WhiteNoiseFr = distr(eng);
+            tmp_ = WhiteNoiseFr/5;
+            //std::cout << " \n ..........!!!!!!!!!!..............\n";
+            //std::cout << "seed"<<Seed * port_in->data[2]* port_in->data[3]*i*100<< " \n";
+            //std::cout <<"WhiteNoiseFr"<<WhiteNoiseFr << " \n";
+            //std::cout <<i << " \n .................................\n";
+            if (2.5 <= port_in->data[3] && port_in->data[3] <= 2.9) {
+                // Initialize a random number generator
+                std::mt19937 eng(Seed* port_in->data[2]); // Seed the generator with a fixed value
+                std::uniform_int_distribution<> distr(0, 39); // Define the range
+                // Generate and print the random number
+                int randomNumber = distr(eng);
+                // Calculate the absolute differences
+                int diff1 = std::abs(i - randomNumber);
+                int diff2 = std::abs(i - randomNumber - 40);
+                // Check if either absolute difference is less than 3
+                if (diff1 < 4 || diff2 < 3) {
+                    tmp_ = WhiteNoiseFr;
+                }
+            }
+            if (3.5 <= port_in->data[3] && port_in->data[3] <= 3.9) {
+                // Initialize a random number generator
+                std::mt19937 eng(Seed* port_in->data[2]+1); // Seed the generator with a fixed value
+                std::uniform_int_distribution<> distr(0, 39); // Define the range
+                // Generate and print the random number
+                int randomNumber = distr(eng);
+                // Calculate the absolute differences
+                int diff1 = std::abs(i - randomNumber);
+                int diff2 = std::abs(i - randomNumber - 40);
+                // Check if either absolute difference is less than 3
+                if (diff1 < 4 || diff2 < 3) {
+                    tmp_ = WhiteNoiseFr;
+                }
+            }
+            if (4.5 <= port_in->data[3] && port_in->data[3] <= 4.9) {
+                // Initialize a random number generator
+                std::mt19937 eng(Seed* port_in->data[2]+2); // Seed the generator with a fixed value
+                std::uniform_int_distribution<> distr(0, 39); // Define the range
+                // Generate and print the random number
+                int randomNumber = distr(eng);
+                // Calculate the absolute differences
+                int diff1 = std::abs(i - randomNumber);
+                int diff2 = std::abs(i - randomNumber - 40);
+                // Check if either absolute difference is less than 3
+                if (diff1 < 4 || diff2 < 4) {
+                    tmp_ = WhiteNoiseFr;
+                }
+            }
         }
-       
         fr_prob_tmp = max_fr[i] * timestep * tmp_;// * t;
-
         rnd = dis(gen);
 
         if (rnd < fr_prob_tmp){
@@ -135,47 +164,11 @@ DiscretizeAdapterPois::tick()
         }
     }
 
-//    if (runtime->time()>=Simtime-timestep){
-//        location_fl.close();
-//    }
+
 }
 
-/**
- * Read the provided JSON file to extracts the multidimensional mean and sigma for the Gaussian tuning curves (place cells).
- * 
- * The file must be structured such that for each output neuron the corresponding means and sigmas are concatenated.
- * A valid JSON string for two output neurons in a two dimensional space would look like:
- *  
- * [[mean_x0, mean_y0, sigma_x0, sigma_y0],
- *  [mean_x1, mean_y1, sigma_x1, sigma_y1]]
- *
- * Example Python script to create a valid JSON file:
- *
- * @code
- * import numpy as np
- * import json
- * 
- * num_neurons_x = 5
- * num_neurons_y = 10
- * 
- * sigma_x = 0.2 
- * sigma_y = 0.1
- * 
- * pos = []
- * 
- * for i, x in enumerate(np.linspace(-1.0, 1.0, num_neurons_x)):
- *     for j, y in enumerate(np.linspace(-1.0, 1.0, num_neurons_y)):
- *         pos.append([x, y, sigma_x, sigma_y])
- * 
- * with open("grid_pos.json", "w+") as f:
- *     json.dump(pos, f)
- *
- * @endcode
- *
- * 
- */
-void 
-DiscretizeAdapterPois::readGridPositionFile()
+
+void DiscretizeAdapterPois::readGridPositionFile()
 {
 
     Json::Reader json_reader;
@@ -223,11 +216,17 @@ DiscretizeAdapterPois::readGridPositionFile()
             offset = num_place_cells + num_grid_cells + num_border_cells;
             // std::cout   << "If statement: Rep_type: " << "border" << "\"\n";
         }
+        else if (representation_type == "noise")
+        {
+            offset = num_place_cells  + num_grid_cells + num_border_cells + num_obstacle_cells;
+            // std::cout   << "If statement: Rep_type: " << "noise" << "\"\n";
+        }
         std::cout  << "offset=" << offset << "\"\n";
         rep_type = new int[port_out->data_size];
         max_fr = new float[port_out->data_size];
         for (int i = 0; i < port_out->data_size; ++i)
-        {
+        {   
+
             rep_type[i] = json_grid_positions[i+offset][4].asInt();
             max_fr[i] = json_grid_positions[i+offset][5].asFloat();
             
@@ -276,6 +275,7 @@ void DiscretizeAdapterPois::readParams()
     num_grid_cells = json_file["grid"]["num_neurons"].asInt();
     num_border_cells = json_file["border"]["num_neurons"].asInt();
     num_obstacle_cells = json_file["obstacle"]["num_neurons"].asInt();
+    num_noise_cells = json_file["noise"]["num_neurons"].asInt();
     file.close();
 
 }
