@@ -152,7 +152,7 @@ void VecsumAdapter::readParams()
 {
     // ********  Read From file ********
     //action_fr & tau calculation
-    std::ifstream file("simulator/parameter_sets/current_parameter/network_params_spikingnet.json");
+    std::ifstream file("parameter_sets/current_parameter/network_params_spikingnet.json");
     Json::Reader reader;
     Json::Value json_file;
     reader.parse(file, json_file);

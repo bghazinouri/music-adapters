@@ -251,7 +251,7 @@ void DiscretizeAdapterPois::readGridPositionFile()
 
 void DiscretizeAdapterPois::readSeedfromNetParams()
 {
-    std::ifstream file("simulator/parameter_sets/current_parameter/sim_params.json");
+    std::ifstream file("parameter_sets/current_parameter/sim_params.json");
     Json::Reader reader;
     Json::Value json_file;
     reader.parse(file, json_file);
@@ -266,7 +266,7 @@ void DiscretizeAdapterPois::readSeedfromNetParams()
 void DiscretizeAdapterPois::readParams()
 {
 
-    std::ifstream file("simulator/parameter_sets/current_parameter/network_params_spikingnet.json");
+    std::ifstream file("parameter_sets/current_parameter/network_params_spikingnet.json");
     Json::Reader reader;
     Json::Value json_file;
     reader.parse(file, json_file);
@@ -283,7 +283,7 @@ void DiscretizeAdapterPois::readParams()
 void DiscretizeAdapterPois::readdatapath()
 {
 
-    std::ifstream file("simulator/parameter_sets/current_parameter/sim_params.json");
+    std::ifstream file("parameter_sets/current_parameter/sim_params.json");
     Json::Reader reader;
     Json::Value json_file;
     reader.parse(file, json_file);
