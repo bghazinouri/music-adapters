@@ -69,7 +69,6 @@ void DiscretizeAdapterPois::tick()
     //}
     //std::cout << std::endl;
 
-
     for (int i = 0; i < port_out->data_size; ++i){
         fr_prob_tmp = 0.;
         tmp_ = 0.;
@@ -109,50 +108,21 @@ void DiscretizeAdapterPois::tick()
             std::uniform_real_distribution<> distr(0.9, 1.1); 
             float WhiteNoiseFr = distr(eng);
             tmp_ = WhiteNoiseFr/5;
-            //std::cout << " \n ..........!!!!!!!!!!..............\n";
-            //std::cout << "seed"<<Seed * port_in->data[2]* port_in->data[3]*i*100<< " \n";
-            //std::cout <<"WhiteNoiseFr"<<WhiteNoiseFr << " \n";
-            //std::cout <<i << " \n .................................\n";
-            if (2.5 <= port_in->data[3] && port_in->data[3] <= 2.9) {
-                // Initialize a random number generator
-                std::mt19937 eng(Seed* port_in->data[2]); // Seed the generator with a fixed value
-                std::uniform_int_distribution<> distr(0, 39); // Define the range
-                // Generate and print the random number
-                int randomNumber = distr(eng);
-                // Calculate the absolute differences
-                int diff1 = std::abs(i - randomNumber);
-                int diff2 = std::abs(i - randomNumber - 40);
-                // Check if either absolute difference is less than 3
-                if (diff1 < 4 || diff2 < 3) {
-                    tmp_ = WhiteNoiseFr;
-                }
-            }
-            if (3.5 <= port_in->data[3] && port_in->data[3] <= 3.9) {
-                // Initialize a random number generator
-                std::mt19937 eng(Seed* port_in->data[2]+1); // Seed the generator with a fixed value
-                std::uniform_int_distribution<> distr(0, 39); // Define the range
-                // Generate and print the random number
-                int randomNumber = distr(eng);
-                // Calculate the absolute differences
-                int diff1 = std::abs(i - randomNumber);
-                int diff2 = std::abs(i - randomNumber - 40);
-                // Check if either absolute difference is less than 3
-                if (diff1 < 4 || diff2 < 3) {
-                    tmp_ = WhiteNoiseFr;
-                }
-            }
-            if (4.5 <= port_in->data[3] && port_in->data[3] <= 4.9) {
-                // Initialize a random number generator
-                std::mt19937 eng(Seed* port_in->data[2]+2); // Seed the generator with a fixed value
-                std::uniform_int_distribution<> distr(0, 39); // Define the range
-                // Generate and print the random number
-                int randomNumber = distr(eng);
-                // Calculate the absolute differences
-                int diff1 = std::abs(i - randomNumber);
-                int diff2 = std::abs(i - randomNumber - 40);
-                // Check if either absolute difference is less than 3
-                if (diff1 < 4 || diff2 < 4) {
-                    tmp_ = WhiteNoiseFr;
+
+            for (size_t j = 0; j < noise_spiking_start.size(); ++j) {
+                if (noise_spiking_start[j] <= port_in->data[3] && port_in->data[3] <= noise_spiking_end[j]) {
+                    std::cout << "NOISE FIRING" << std::endl;
+                    std::mt19937 eng(Seed* port_in->data[2] +  j); // Seed the generator with a fixed value
+                    std::uniform_int_distribution<> distr(0, 39); // Define the range
+                    // Generate and print the random number
+                    int randomNumber = distr(eng);
+                    // Calculate the absolute differences
+                    int diff1 = std::abs(i - randomNumber);
+                    int diff2 = std::abs(i - randomNumber - 40);
+                    // Check if either absolute difference is less than 3
+                    if (diff1 < 4 || diff2 < 3) {
+                        tmp_ = WhiteNoiseFr;
+                    }
                 }
             }
         }
@@ -265,7 +235,6 @@ void DiscretizeAdapterPois::readSeedfromNetParams()
 // The following function helps to assign the parameters from the file for the other functions to use
 void DiscretizeAdapterPois::readParams()
 {
-
     std::ifstream file("parameter_sets/current_parameter/network_params_spikingnet.json");
     Json::Reader reader;
     Json::Value json_file;
@@ -276,18 +245,28 @@ void DiscretizeAdapterPois::readParams()
     num_border_cells = json_file["border"]["num_neurons"].asInt();
     num_obstacle_cells = json_file["obstacle"]["num_neurons"].asInt();
     num_noise_cells = json_file["noise"]["num_neurons"].asInt();
-    file.close();
 
+    //std::vector<float> noise_spiking_start;
+    Json::Value noise_spiking_start_json = json_file["noise"]["cells_prop"]["start_times"];
+    for (Json::Value::ArrayIndex i = 0; i < noise_spiking_start_json.size(); ++i)
+        noise_spiking_start.push_back(noise_spiking_start_json[i].asFloat());
+    noise_spiking_start_json.clear();
+
+    //std::vector<float> noise_spiking_end;
+    Json::Value noise_spiking_end_json = json_file["noise"]["cells_prop"]["end_times"];
+    for (Json::Value::ArrayIndex i = 0; i < noise_spiking_end_json.size(); ++i)
+        noise_spiking_end.push_back(noise_spiking_end_json[i].asFloat());
+    noise_spiking_end_json.clear();
+
+    file.close();
 }
 
 void DiscretizeAdapterPois::readdatapath()
 {
-
     std::ifstream file("parameter_sets/current_parameter/sim_params.json");
     Json::Reader reader;
     Json::Value json_file;
     reader.parse(file, json_file);
     data_path = json_file["data_path"].asString();
     file.close();
-
 }

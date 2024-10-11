@@ -53,6 +53,8 @@ class DiscretizeAdapterPois : public Adapter
         int num_obstacle_cells = 0;
         int num_noise_cells = 0;
         std::string data_path= "./";
+        std::vector<float> noise_spiking_start;
+        std::vector<float> noise_spiking_end;
         const double PI = M_PI;
 
     private:
